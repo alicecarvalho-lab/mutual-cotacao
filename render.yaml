@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: mutual-cotacao
+    runtime: node
+    buildCommand: npm install && npm run build && npm run db:init
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: API_PORT
+        value: 10000
+    disk:
+      name: mutual-cotacao-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

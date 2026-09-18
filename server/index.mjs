@@ -1,10 +1,14 @@
 import express from 'express'
 import { randomUUID } from 'node:crypto'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { db } from './db.mjs'
 
 const app = express()
 const port = Number(process.env.API_PORT || 3333)
 app.use(express.json({ limit: '100kb' }))
+const publicDir = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'dist')
+app.use(express.static(publicDir))
 
 const required = ['vehicleType', 'brand', 'model', 'version', 'insuredName', 'insuredCpf', 'driverName', 'phone', 'email']
 const quoteCode = () => `MB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`
@@ -37,5 +41,7 @@ app.post('/api/quotes', (request, response) => {
   try { transaction() } catch (error) { return response.status(500).json({ message: 'Não foi possível salvar a cotação.', detail: error.message }) }
   return response.status(201).json({ id, code, status: 'Cotação recebida', createdAt: timestamp })
 })
+
+app.get('*splat', (_request, response) => response.sendFile(join(publicDir, 'index.html')))
 
 app.listen(port, () => console.log(`API SQLite running at http://127.0.0.1:${port}`))
