@@ -4,19 +4,25 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"node server/index.mjs\" \"vite\"",
+    "dev:api": "node server/index.mjs",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:init": "node server/db.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.2.1",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "typescript": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "concurrently": "latest"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0"
   }
