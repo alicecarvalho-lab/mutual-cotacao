@@ -74,7 +74,14 @@ function App() {
     if (history.length) { const historyBox = document.createElement('div'); historyBox.className = 'summary-history'; const historyTitle = document.createElement('strong'); historyTitle.textContent = 'Histórico encontrado'; historyBox.append(historyTitle); history.slice(0, 2).forEach(item => { const line = document.createElement('span'); line.textContent = item.type === 'draft' ? 'Existe uma cotação não finalizada.' : `Cotação ${item.code || ''} já finalizada.`; historyBox.append(line) }); summary.append(historyBox) }
   }, [data, currentStep, history])
   useEffect(() => { if (data.insuredDriver === 'Sim' && data.driverName !== data.insuredName) setData(current => ({ ...current, driverName: current.insuredName, driverSex: current.insuredSex })) }, [data.insuredDriver, data.insuredName, data.insuredSex, data.driverName])
-  useEffect(() => { if (data.insuredOwner === 'Sim' && data.ownerName !== data.insuredName) setData(current => ({ ...current, ownerName: current.insuredName, ownerCpf: current.insuredCpf })) }, [data.insuredOwner, data.insuredName, data.insuredCpf, data.ownerName])
+  useEffect(() => {
+    if (data.insuredOwner === 'Sim' && (data.ownerName !== data.insuredName || data.ownerCpf !== data.insuredCpf || data.ownerRelation)) {
+      setData(current => ({ ...current, ownerName: current.insuredName, ownerCpf: current.insuredCpf, ownerRelation: '' }))
+    }
+    if (data.insuredOwner === 'Não' && (data.ownerName || data.ownerCpf || data.ownerRelation)) {
+      setData(current => ({ ...current, ownerName: '', ownerCpf: '', ownerRelation: '' }))
+    }
+  }, [data.insuredOwner, data.insuredName, data.insuredCpf, data.ownerName, data.ownerCpf, data.ownerRelation])
   const premium = useMemo(() => 119 + (data.vehicleType === 'Moto' ? -38 : 0) + (data.workUse === 'Sim' ? 32 : 0) + (data.currentInsurance === 'Não' ? 14 : 0), [data])
   const validate = () => {
     const next: Record<string, string> = {}; const require = (key: keyof FormData, message: string) => { if (!data[key]) next[key] = message }
