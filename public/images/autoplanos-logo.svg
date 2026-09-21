@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title desc">
+  <title id="title">AutoPlanos</title>
+  <desc id="desc">Logo AutoPlanos Proteção Veicular</desc>
+  <rect width="520" height="150" fill="#ffffff"/>
+  <path d="M33 35 L42 56 L65 58 L47 72 L52 95 L33 82 L13 95 L19 72 L1 58 L24 56 Z" fill="#df2837" stroke="#183b91" stroke-width="5"/>
+  <text x="57" y="77" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="800" font-style="italic" fill="#df2837">AUTO</text>
+  <text x="229" y="77" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="800" font-style="italic" fill="#173b91">PLANOS</text>
+  <text x="184" y="126" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" letter-spacing="1" fill="#173b91">PROTEÇÃO VEICULAR</text>
+</svg>
