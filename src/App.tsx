@@ -33,7 +33,11 @@ function App() {
   const [quote, setQuote] = useState<{ code: string; createdAt: string } | null>(null)
   const models = modelCatalog[data.brand] || []
   const currentStep = step === 5 && data.currentInsurance === 'Não' ? 6 : step
-  const update = (field: keyof FormData, value: string) => setData(current => ({ ...current, [field]: value }))
+  const update = (field: keyof FormData, value: string) => setData(current => {
+    const next = { ...current, [field]: value }
+    localStorage.setItem('mutual-cotacao-draft', JSON.stringify(next))
+    return next
+  })
   useEffect(() => { localStorage.setItem('mutual-cotacao-draft', JSON.stringify(data)) }, [data])
   useEffect(() => {
     const layout = document.querySelector('.layout')
@@ -69,8 +73,9 @@ function App() {
     if (currentStep === 7) { if (onlyDigits(data.phone).length < 10) next.phone = 'Telefone inválido.'; if (!/^\S+@\S+\.\S+$/.test(data.email)) next.email = 'E-mail inválido.'; require('preferredContact', 'Escolha a forma de contato.'); require('bestTime', 'Escolha o melhor horário.') }
     setErrors(next); return Object.keys(next).length === 0
   }
-  const goNext = () => { if (!validate()) return; let target = Math.min(8, currentStep + 1) as Step; if (target === 5 && data.currentInsurance === 'Não') target = 6; setStep(target) }
-  const goBack = () => { let target = Math.max(1, currentStep - 1) as Step; if (target === 5 && data.currentInsurance === 'Não') target = 4; setErrors({}); setStep(target) }
+  const saveDraft = () => localStorage.setItem('mutual-cotacao-draft', JSON.stringify(data))
+  const goNext = () => { if (!validate()) return; saveDraft(); let target = Math.min(8, currentStep + 1) as Step; if (target === 5 && data.currentInsurance === 'Não') target = 6; setStep(target) }
+  const goBack = () => { saveDraft(); let target = Math.max(1, currentStep - 1) as Step; if (target === 5 && data.currentInsurance === 'Não') target = 4; setErrors({}); setStep(target) }
   const finish = async () => {
     try {
       const response = await fetch('/api/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
