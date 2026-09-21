@@ -12,8 +12,27 @@ app.use(express.static(publicDir))
 
 const required = ['vehicleType', 'brand', 'model', 'version', 'insuredName', 'insuredCpf', 'driverName', 'phone', 'email']
 const quoteCode = () => `MB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`
+const normalizeCpf = value => String(value || '').replace(/\D/g, '')
+const normalizeEmail = value => String(value || '').trim().toLowerCase()
 
 app.get('/api/health', (_request, response) => response.json({ ok: true, database: 'sqlite' }))
+app.get('/api/quotes/lookup', (request, response) => {
+  const cpf = normalizeCpf(request.query.cpf)
+  const email = normalizeEmail(request.query.email)
+  if (cpf.length !== 11 && !/^\S+@\S+\.\S+$/.test(email)) return response.json({ matches: [] })
+  const finalized = db.prepare(`SELECT code, status, created_at AS createdAt, updated_at AS updatedAt, raw_json AS rawJson FROM quotations WHERE (json_extract(raw_json, '$.insuredCpf') = ? AND ? != '') OR (lower(json_extract(raw_json, '$.email')) = ? AND ? != '') ORDER BY created_at DESC`).all(cpf, cpf, email, email)
+  const drafts = db.prepare(`SELECT id, status, created_at AS createdAt, updated_at AS updatedAt, raw_json AS rawJson FROM quotation_sessions WHERE status = 'Rascunho' AND ((cpf = ? AND ? != '') OR (email = ? AND ? != '')) ORDER BY updated_at DESC`).all(cpf, cpf, email, email)
+  return response.json({ matches: [...finalized.map(item => ({ type: 'finalized', code: item.code, status: item.status, createdAt: item.createdAt, data: JSON.parse(item.rawJson) })), ...drafts.map(item => ({ type: 'draft', sessionId: item.id, status: item.status, createdAt: item.createdAt, updatedAt: item.updatedAt, data: JSON.parse(item.rawJson) }))] })
+})
+app.post('/api/quote-sessions', (request, response) => {
+  const { sessionId, data } = request.body || {}
+  const cpf = normalizeCpf(data?.insuredCpf)
+  const email = normalizeEmail(data?.email)
+  if (!sessionId || (cpf.length !== 11 && !/^\S+@\S+\.\S+$/.test(email))) return response.status(422).json({ message: 'Informe um CPF ou e-mail válido para salvar o rascunho.' })
+  const timestamp = new Date().toISOString()
+  db.prepare(`INSERT INTO quotation_sessions (id, cpf, email, status, created_at, updated_at, raw_json) VALUES (?, ?, ?, 'Rascunho', ?, ?, ?) ON CONFLICT(id) DO UPDATE SET cpf = excluded.cpf, email = excluded.email, updated_at = excluded.updated_at, raw_json = excluded.raw_json`).run(sessionId, cpf || null, email || null, timestamp, timestamp, JSON.stringify(data))
+  return response.status(200).json({ sessionId, status: 'Rascunho', updatedAt: timestamp })
+})
 app.get('/api/quotes/:code', (request, response) => {
   const quote = db.prepare('SELECT * FROM quotations WHERE code = ?').get(request.params.code)
   if (!quote) return response.status(404).json({ message: 'Cotação não encontrada.' })
@@ -37,6 +56,7 @@ app.post('/api/quotes', (request, response) => {
     db.prepare('INSERT INTO usage_profiles VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, data.workCommute, data.schoolCommute, data.workUse, data.professionalUse || null, Number(data.monthlyKm), data.hasGarage, data.garageType || null, data.overnightZip, data.travelZip)
     if (data.currentInsurance === 'Sim') db.prepare('INSERT INTO previous_insurance VALUES (?, ?, ?, ?, ?, ?)').run(id, data.insurer, data.policyExpiry, data.bonusClass, data.stolenLastTwoYears, data.claimLastYear)
     db.prepare('INSERT INTO contacts VALUES (?, ?, ?, ?, ?)').run(id, data.phone, data.email, data.preferredContact, data.bestTime)
+    db.prepare("UPDATE quotation_sessions SET status = 'Finalizada', updated_at = ? WHERE (cpf = ? AND cpf != '') OR (email = ? AND email != '')").run(timestamp, normalizeCpf(data.insuredCpf), normalizeEmail(data.email))
   })
   try { transaction() } catch (error) { return response.status(500).json({ message: 'Não foi possível salvar a cotação.', detail: error.message }) }
   return response.status(201).json({ id, code, status: 'Cotação recebida', createdAt: timestamp })

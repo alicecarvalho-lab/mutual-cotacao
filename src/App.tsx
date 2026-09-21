@@ -32,6 +32,8 @@ function App() {
   const [data, setData] = useState<FormData>(() => { try { return { ...initialData, ...JSON.parse(localStorage.getItem('mutual-cotacao-draft') || '{}') } } catch { return initialData } })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [quote, setQuote] = useState<{ code: string; createdAt: string } | null>(null)
+  const [sessionId] = useState(() => localStorage.getItem('mutual-cotacao-session-id') || crypto.randomUUID())
+  const [history, setHistory] = useState<Array<{ type: 'draft' | 'finalized'; status: string; code?: string }>>([])
   const models = modelCatalog[data.brand] || []
   const currentStep = step === 5 && data.currentInsurance === 'Não' ? 6 : step
   const update = (field: keyof FormData, value: string) => setData(current => {
@@ -40,6 +42,16 @@ function App() {
     return next
   })
   useEffect(() => { localStorage.setItem('mutual-cotacao-draft', JSON.stringify(data)) }, [data])
+  useEffect(() => {
+    localStorage.setItem('mutual-cotacao-session-id', sessionId)
+    const cpf = onlyDigits(data.insuredCpf)
+    const email = data.email.trim().toLowerCase()
+    if (cpf.length !== 11 && !/^\S+@\S+\.\S+$/.test(email)) return
+    const controller = new AbortController()
+    fetch('/api/quote-sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, data }), signal: controller.signal }).catch(() => undefined)
+    fetch(`/api/quotes/lookup?cpf=${encodeURIComponent(cpf)}&email=${encodeURIComponent(email)}`, { signal: controller.signal }).then(response => response.ok ? response.json() : null).then(result => { if (!controller.signal.aborted) setHistory(result?.matches || []) }).catch(() => undefined)
+    return () => controller.abort()
+  }, [data, sessionId])
   useEffect(() => {
     const layout = document.querySelector('.layout')
     const form = layout?.querySelector('.form-area')
@@ -59,7 +71,8 @@ function App() {
     const summaryTotal = data.currentInsurance === 'Não' ? 7 : 8
     const progress = document.createElement('div'); progress.className = 'summary-progress'; const progressBar = document.createElement('span'); progressBar.style.width = `${((summaryStep - 1) / (summaryTotal - 1)) * 100}%`; progress.append(progressBar); summary.append(progress)
     const helper = document.createElement('p'); helper.className = 'summary-helper'; helper.textContent = `Etapa ${summaryStep} de ${summaryTotal}`; summary.append(helper)
-  }, [data, currentStep])
+    if (history.length) { const historyBox = document.createElement('div'); historyBox.className = 'summary-history'; const historyTitle = document.createElement('strong'); historyTitle.textContent = 'Histórico encontrado'; historyBox.append(historyTitle); history.slice(0, 2).forEach(item => { const line = document.createElement('span'); line.textContent = item.type === 'draft' ? 'Existe uma cotação não finalizada.' : `Cotação ${item.code || ''} já finalizada.`; historyBox.append(line) }); summary.append(historyBox) }
+  }, [data, currentStep, history])
   useEffect(() => { if (data.insuredDriver === 'Sim' && data.driverName !== data.insuredName) setData(current => ({ ...current, driverName: current.insuredName, driverSex: current.insuredSex })) }, [data.insuredDriver, data.insuredName, data.insuredSex, data.driverName])
   useEffect(() => { if (data.insuredOwner === 'Sim' && data.ownerName !== data.insuredName) setData(current => ({ ...current, ownerName: current.insuredName, ownerCpf: current.insuredCpf })) }, [data.insuredOwner, data.insuredName, data.insuredCpf, data.ownerName])
   const premium = useMemo(() => 119 + (data.vehicleType === 'Moto' ? -38 : 0) + (data.workUse === 'Sim' ? 32 : 0) + (data.currentInsurance === 'Não' ? 14 : 0), [data])

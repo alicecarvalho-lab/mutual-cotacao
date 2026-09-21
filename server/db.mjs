@@ -55,6 +55,17 @@ db.exec(`
     quotation_id TEXT PRIMARY KEY REFERENCES quotations(id) ON DELETE CASCADE,
     phone TEXT NOT NULL, email TEXT NOT NULL, preferred_contact TEXT NOT NULL, best_time TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS quotation_sessions (
+    id TEXT PRIMARY KEY,
+    cpf TEXT,
+    email TEXT,
+    status TEXT NOT NULL DEFAULT 'Rascunho',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    raw_json TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_quotation_sessions_cpf ON quotation_sessions(cpf);
+  CREATE INDEX IF NOT EXISTS idx_quotation_sessions_email ON quotation_sessions(email);
 `)
 
 if (import.meta.url === `file://${process.argv[1]}`) console.log(`SQLite initialized at ${databasePath}`)
