@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title desc">
+  <title id="title">Via Auto</title><desc id="desc">Logo fictícia Via Auto</desc>
+  <rect width="520" height="150" fill="#ffffff"/>
+  <path d="M15 39 L45 104 L76 39 L98 39 L58 121 L34 121 L-7 39 Z" fill="#5d7889"/>
+  <text x="111" y="82" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="800" font-style="italic" fill="#526d7e">VIA</text>
+  <text x="265" y="82" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="800" fill="#17212b">AUTO</text>
+  <path d="M270 105 L470 105" stroke="#5d7889" stroke-width="6" stroke-linecap="round"/>
+</svg>

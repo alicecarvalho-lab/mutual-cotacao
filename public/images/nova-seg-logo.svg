@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title desc">
+  <title id="title">Nova Seg</title><desc id="desc">Logo fictícia Nova Seg</desc>
+  <rect width="520" height="150" fill="#ffffff"/>
+  <circle cx="54" cy="67" r="42" fill="#efc557"/>
+  <path d="M31 68 L48 85 L80 48" fill="none" stroke="#5f500f" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="112" y="80" font-family="Arial, Helvetica, sans-serif" font-size="67" font-weight="800" fill="#604f0c">NOVA</text>
+  <text x="115" y="122" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" letter-spacing="4" fill="#8b761b">SEG</text>
+</svg>

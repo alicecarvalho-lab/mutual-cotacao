@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title desc">
+  <title id="title">Protege Auto</title><desc id="desc">Logo fictícia Protege Auto</desc>
+  <rect width="520" height="150" fill="#ffffff"/>
+  <path d="M38 22 L78 38 L72 83 Q59 111 38 123 Q17 111 4 83 L-2 38 Z" fill="#2c789e"/>
+  <path d="M38 40 L62 50 L58 78 Q50 96 38 103 Q26 96 18 78 L14 50 Z" fill="#ffffff"/>
+  <text x="94" y="78" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="800" fill="#246986">PROTEGE</text>
+  <text x="96" y="120" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="700" letter-spacing="3" fill="#17212b">AUTO</text>
+</svg>
