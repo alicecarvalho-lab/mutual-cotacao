@@ -24,7 +24,7 @@ db.exec(`
     manufacture_year INTEGER NOT NULL, model_year INTEGER NOT NULL, zero_km TEXT NOT NULL,
     financed TEXT NOT NULL, has_plate TEXT NOT NULL, plate TEXT,
     alarm TEXT NOT NULL, anti_theft TEXT NOT NULL, gas_kit TEXT NOT NULL, taxi TEXT NOT NULL,
-    tax_exemption TEXT NOT NULL DEFAULT ''
+    tax_exempt TEXT NOT NULL DEFAULT '', tax_exemption TEXT NOT NULL DEFAULT ''
   );
   CREATE TABLE IF NOT EXISTS insured_people (
     quotation_id TEXT PRIMARY KEY REFERENCES quotations(id) ON DELETE CASCADE,
@@ -70,5 +70,6 @@ db.exec(`
 `)
 
 try { db.exec("ALTER TABLE vehicles ADD COLUMN tax_exemption TEXT NOT NULL DEFAULT ''") } catch (error) { if (!String(error.message).includes('duplicate column name')) throw error }
+try { db.exec("ALTER TABLE vehicles ADD COLUMN tax_exempt TEXT NOT NULL DEFAULT ''") } catch (error) { if (!String(error.message).includes('duplicate column name')) throw error }
 
 if (import.meta.url === `file://${process.argv[1]}`) console.log(`SQLite initialized at ${databasePath}`)
