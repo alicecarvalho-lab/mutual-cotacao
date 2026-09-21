@@ -35,6 +35,26 @@ function App() {
   const currentStep = step === 5 && data.currentInsurance === 'Não' ? 6 : step
   const update = (field: keyof FormData, value: string) => setData(current => ({ ...current, [field]: value }))
   useEffect(() => { localStorage.setItem('mutual-cotacao-draft', JSON.stringify(data)) }, [data])
+  useEffect(() => {
+    const layout = document.querySelector('.layout')
+    const form = layout?.querySelector('.form-area')
+    if (!layout || !form) return
+    let summary = layout.querySelector<HTMLElement>('.summary-card')
+    if (!summary) { summary = document.createElement('aside'); summary.className = 'summary-card'; layout.insertBefore(summary, form) }
+    summary.replaceChildren()
+    const eyebrow = document.createElement('p'); eyebrow.className = 'eyebrow'; eyebrow.textContent = 'Acompanhe seu progresso'; summary.append(eyebrow)
+    const title = document.createElement('h2'); title.textContent = 'Resumo da cotação'; summary.append(title)
+    const addRow = (label: string, value: string) => { const row = document.createElement('div'); row.className = 'summary-row'; const rowLabel = document.createElement('span'); rowLabel.textContent = label; const rowValue = document.createElement('strong'); rowValue.textContent = value || 'Ainda não informado'; row.append(rowLabel, rowValue); summary?.append(row) }
+    addRow('Segurado', data.insuredName)
+    addRow('Veículo', [data.brand, data.model, data.version].filter(Boolean).join(' '))
+    addRow('Condutor', data.driverName || (data.insuredDriver === 'Sim' && data.insuredName ? 'Mesmo segurado' : ''))
+    addRow('Proprietário', data.insuredOwner === 'Sim' ? 'Mesmo segurado' : data.ownerName)
+    addRow('Seguro atual', data.currentInsurance === 'Sim' ? data.insurer : data.currentInsurance === 'Não' ? 'Não possui' : '')
+    const summaryStep = data.currentInsurance === 'Não' && currentStep > 4 ? currentStep - 1 : currentStep
+    const summaryTotal = data.currentInsurance === 'Não' ? 7 : 8
+    const progress = document.createElement('div'); progress.className = 'summary-progress'; const progressBar = document.createElement('span'); progressBar.style.width = `${((summaryStep - 1) / (summaryTotal - 1)) * 100}%`; progress.append(progressBar); summary.append(progress)
+    const helper = document.createElement('p'); helper.className = 'summary-helper'; helper.textContent = `Etapa ${summaryStep} de ${summaryTotal}`; summary.append(helper)
+  }, [data, currentStep])
   useEffect(() => { if (data.insuredDriver === 'Sim' && data.driverName !== data.insuredName) setData(current => ({ ...current, driverName: current.insuredName, driverSex: current.insuredSex })) }, [data.insuredDriver, data.insuredName, data.insuredSex, data.driverName])
   useEffect(() => { if (data.insuredOwner === 'Sim' && data.ownerName !== data.insuredName) setData(current => ({ ...current, ownerName: current.insuredName, ownerCpf: current.insuredCpf })) }, [data.insuredOwner, data.insuredName, data.insuredCpf, data.ownerName])
   const premium = useMemo(() => 119 + (data.vehicleType === 'Moto' ? -38 : 0) + (data.workUse === 'Sim' ? 32 : 0) + (data.currentInsurance === 'Não' ? 14 : 0), [data])
