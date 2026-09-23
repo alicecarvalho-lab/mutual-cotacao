@@ -62,6 +62,15 @@ app.post('/api/quotes', (request, response) => {
   return response.status(201).json({ id, code, status: 'Cotação recebida', createdAt: timestamp })
 })
 
+app.use('/api', (_request, response) => response.status(404).json({ message: 'Endpoint não encontrado.' }))
+
 app.get('*splat', (_request, response) => response.sendFile(join(publicDir, 'index.html')))
+
+app.use((error, _request, response, _next) => {
+  console.error(error)
+  const status = error.status || error.statusCode || 500
+  const message = error.type === 'entity.too.large' ? 'Os dados enviados são muito grandes.' : error.type === 'entity.parse.failed' ? 'Não foi possível interpretar os dados enviados.' : 'Erro interno do servidor.'
+  response.status(status).json({ message })
+})
 
 app.listen(port, () => console.log(`API SQLite running at http://127.0.0.1:${port}`))
