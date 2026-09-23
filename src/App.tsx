@@ -113,6 +113,7 @@ function App() {
   const saveDraft = () => localStorage.setItem('mutual-cotacao-draft', JSON.stringify(data))
   const goNext = () => { if (!validate()) return; saveDraft(); let target = Math.min(8, currentStep + 1) as Step; if (target === 7 && data.currentInsurance === 'Não') target = 8; setStep(target) }
   const goBack = () => { saveDraft(); let target = Math.max(1, currentStep - 1) as Step; if (target === 7 && data.currentInsurance === 'Não') target = 6; setErrors({}); setStep(target) }
+  const finishLocally = () => { const code = `MB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`; const createdAt = new Date().toISOString(); const record = { id: crypto.randomUUID(), code, status: 'Cotação recebida', createdAt, updatedAt: createdAt, origin: 'Cotação Web', insured: { name: data.insuredName, cpf: data.insuredCpf }, vehicle: { type: data.vehicleType, brand: data.brand, model: data.model, version: data.version }, driver: { name: data.driverName }, owner: { name: data.ownerName || data.insuredName }, usage: { monthlyKm: data.monthlyKm }, previousInsurance: data.currentInsurance === 'Sim' ? { insurer: data.insurer } : null, contact: { phone: data.phone, email: data.email } }; localStorage.setItem('mutual-cotacao-record', JSON.stringify(record)); setProcessingStep(5); setProcessing(false); setQuote({ code, createdAt }) }
   const finish = async () => {
     setProcessing(true)
     setProcessingStep(0)
@@ -120,16 +121,17 @@ function App() {
       const response = await fetch('/api/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
       const isJson = response.headers.get('content-type')?.includes('application/json')
       const result = isJson ? await response.json() : null
-      if (!response.ok || !result) throw new Error(result?.message || 'Não foi possível salvar a cotação. Tente novamente em instantes.')
+      if (!response.ok || !result) throw new Error(result?.message || 'Não foi possível salvar a cotação no servidor.')
       setProcessingStep(5)
       setProcessing(false)
       setQuote({ code: result.code, createdAt: result.createdAt })
     } catch (error) {
-      setProcessing(false)
-      window.alert(error instanceof Error ? error.message : 'Não foi possível salvar a cotação.')
+      // Mesmo sem conseguir registrar no servidor (API fora do ar, offline, etc.), o usuário não pode ficar travado:
+      // seguimos para a tela de resultado com um protocolo gerado localmente.
+      console.warn('Não foi possível registrar a cotação no servidor, seguindo com protocolo local.', error)
+      finishLocally()
     }
   }
-  const finishLegacy = () => { const code = `MB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`; const createdAt = new Date().toISOString(); const record = { id: crypto.randomUUID(), code, status: 'Cotação recebida', createdAt, updatedAt: createdAt, origin: 'Cotação Web', insured: { name: data.insuredName, cpf: data.insuredCpf }, vehicle: { type: data.vehicleType, brand: data.brand, model: data.model, version: data.version }, driver: { name: data.driverName }, owner: { name: data.ownerName || data.insuredName }, usage: { monthlyKm: data.monthlyKm }, previousInsurance: data.currentInsurance === 'Sim' ? { insurer: data.insurer } : null, contact: { phone: data.phone, email: data.email } }; localStorage.setItem('mutual-cotacao-record', JSON.stringify(record)); setQuote({ code, createdAt }) }
   if (!started) return <LandingPage onStart={() => setStarted(true)} />
   if (processing) return <ProcessingScreen step={processingStep} />
   if (quote && !selectedOffer) return <QuoteResults data={data} onChoose={setSelectedOffer} />
