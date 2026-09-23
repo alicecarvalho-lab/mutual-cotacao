@@ -17,6 +17,7 @@ const stepLabels = ['Início', 'Segurado', 'Contato', 'Veículo', 'Condutor', 'U
 const modelCatalog: Record<string, { model: string; versions: string[] }[]> = { Chevrolet: [{ model: 'Onix', versions: ['1.0 Turbo LT', '1.0 MT', 'Premier 1.0 Turbo'] }, { model: 'Tracker', versions: ['1.0 Turbo AT', '1.2 Turbo Premier'] }], Volkswagen: [{ model: 'T-Cross', versions: ['200 TSI', '250 TSI Comfortline'] }, { model: 'Polo', versions: ['1.0 MPI', '1.0 TSI'] }], Fiat: [{ model: 'Argo', versions: ['1.0', 'Drive 1.3'] }, { model: 'Pulse', versions: ['Drive 1.3', 'Audace 1.0 Turbo'] }] }
 const professions = ['Administrador(a)', 'Advogado(a)', 'Agricultor(a)', 'Analista de sistemas', 'Arquiteto(a)', 'Artesão(ã)', 'Artista', 'Atendente', 'Autônomo(a)', 'Bancário(a)', 'Comerciante', 'Consultor(a)', 'Contador(a)', 'Designer', 'Diretor(a)', 'Eletricista', 'Empresário(a)', 'Enfermeiro(a)', 'Engenheiro(a)', 'Estudante', 'Farmacêutico(a)', 'Funcionário(a) público(a)', 'Garçom/Garçonete', 'Jornalista', 'Médico(a)', 'Militar', 'Motorista profissional', 'Nutricionista', 'Operador(a) de máquinas', 'Professor(a)', 'Profissional de tecnologia', 'Publicitário(a)', 'Representante comercial', 'Secretário(a)', 'Técnico(a)', 'Vendedor(a)', 'Outra']
 const yesNo = ['Sim', 'Não'] as const
+const MIN_PROCESSING_MS = 6000
 const money = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const onlyDigits = (value: string) => value.replace(/\D/g, '')
 const maskCpf = (value: string) => onlyDigits(value).slice(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
@@ -87,7 +88,7 @@ function App() {
   useEffect(() => { if (data.taxExempt === 'Não' && data.taxExemption) setData(current => ({ ...current, taxExemption: '' })) }, [data.taxExempt, data.taxExemption])
   useEffect(() => {
     if (!processing) return
-    const timer = window.setInterval(() => setProcessingStep(current => Math.min(current + 1, 5)), 1400)
+    const timer = window.setInterval(() => setProcessingStep(current => Math.min(current + 1, 5)), 1200)
     return () => window.clearInterval(timer)
   }, [processing])
   useEffect(() => {
@@ -113,23 +114,27 @@ function App() {
   const saveDraft = () => localStorage.setItem('mutual-cotacao-draft', JSON.stringify(data))
   const goNext = () => { if (!validate()) return; saveDraft(); let target = Math.min(8, currentStep + 1) as Step; if (target === 7 && data.currentInsurance === 'Não') target = 8; setStep(target) }
   const goBack = () => { saveDraft(); let target = Math.max(1, currentStep - 1) as Step; if (target === 7 && data.currentInsurance === 'Não') target = 6; setErrors({}); setStep(target) }
-  const finishLocally = () => { const code = `MB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`; const createdAt = new Date().toISOString(); const record = { id: crypto.randomUUID(), code, status: 'Cotação recebida', createdAt, updatedAt: createdAt, origin: 'Cotação Web', insured: { name: data.insuredName, cpf: data.insuredCpf }, vehicle: { type: data.vehicleType, brand: data.brand, model: data.model, version: data.version }, driver: { name: data.driverName }, owner: { name: data.ownerName || data.insuredName }, usage: { monthlyKm: data.monthlyKm }, previousInsurance: data.currentInsurance === 'Sim' ? { insurer: data.insurer } : null, contact: { phone: data.phone, email: data.email } }; localStorage.setItem('mutual-cotacao-record', JSON.stringify(record)); setProcessingStep(5); setProcessing(false); setQuote({ code, createdAt }) }
+  const finishLocally = () => { const code = `MB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`; const createdAt = new Date().toISOString(); const record = { id: crypto.randomUUID(), code, status: 'Cotação recebida', createdAt, updatedAt: createdAt, origin: 'Cotação Web', insured: { name: data.insuredName, cpf: data.insuredCpf }, vehicle: { type: data.vehicleType, brand: data.brand, model: data.model, version: data.version }, driver: { name: data.driverName }, owner: { name: data.ownerName || data.insuredName }, usage: { monthlyKm: data.monthlyKm }, previousInsurance: data.currentInsurance === 'Sim' ? { insurer: data.insurer } : null, contact: { phone: data.phone, email: data.email } }; localStorage.setItem('mutual-cotacao-record', JSON.stringify(record)); return { code, createdAt } }
   const finish = async () => {
     setProcessing(true)
     setProcessingStep(0)
+    const startedAt = Date.now()
+    const reveal = (result: { code: string; createdAt: string }) => {
+      // A tela de "Cotando…" precisa durar pelo menos 6s, mesmo que a resposta chegue mais rápido.
+      const remaining = Math.max(0, MIN_PROCESSING_MS - (Date.now() - startedAt))
+      window.setTimeout(() => { setProcessingStep(5); setProcessing(false); setQuote(result) }, remaining)
+    }
     try {
       const response = await fetch('/api/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
       const isJson = response.headers.get('content-type')?.includes('application/json')
       const result = isJson ? await response.json() : null
       if (!response.ok || !result) throw new Error(result?.message || 'Não foi possível salvar a cotação no servidor.')
-      setProcessingStep(5)
-      setProcessing(false)
-      setQuote({ code: result.code, createdAt: result.createdAt })
+      reveal({ code: result.code, createdAt: result.createdAt })
     } catch (error) {
       // Mesmo sem conseguir registrar no servidor (API fora do ar, offline, etc.), o usuário não pode ficar travado:
       // seguimos para a tela de resultado com um protocolo gerado localmente.
       console.warn('Não foi possível registrar a cotação no servidor, seguindo com protocolo local.', error)
-      finishLocally()
+      reveal(finishLocally())
     }
   }
   if (!started) return <LandingPage onStart={() => setStarted(true)} />
