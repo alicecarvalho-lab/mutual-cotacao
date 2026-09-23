@@ -117,12 +117,10 @@ footer { width: min(1240px, calc(100% - 56px)); color: #98a2b3; }
 .home-logo:focus-visible, .landing-brand:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
 .offer-coverages { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
 .offer-section-label { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.offer-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-.offer-tags > span { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid transparent; border-radius: 999px; background: #f1f7f3; color: #1f4d3a; font-size: 11px; font-weight: 600; line-height: 1.2; }
-.offer-tags svg { flex: none; color: var(--green); }
-.offer-tags > span.optional { border: 1px dashed #d6ddd8; background: transparent; color: var(--muted); }
-.offer-tags > span.optional svg { color: var(--muted); }
-.offer-tags em { margin-left: 2px; padding: 1px 5px; border-radius: 999px; background: #fdf3dc; color: #8a5a12; font-size: 9px; font-style: normal; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+.offer-coverage-list { display: grid; gap: 6px; }
+.offer-coverage { display: flex; align-items: center; gap: 7px; color: var(--dark); font-size: 12px; font-weight: 500; line-height: 1.3; }
+.offer-coverage svg { flex: none; color: var(--green); }
+.offer-coverage em { color: #9a6a12; font-size: 11px; font-style: normal; font-weight: 600; }
 .offer-deductible { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 4px; padding: 8px 10px; border-radius: 10px; background: #f7f9f8; }
 .offer-deductible span { color: var(--muted); font-size: 11px; font-weight: 600; }
 .offer-deductible strong { color: var(--dark); font: 800 14px Manrope, sans-serif; letter-spacing: -.01em; }
